@@ -128,31 +128,31 @@ ko.utils = (function () {
         },
 
 
-        fixUpContinuousNodeArray: function(continuousNodeArray, parentNode) {
-            if (continuousNodeArray.length) {
-                // The parent node can be a virtual element; so get the real parent node
-                parentNode = (parentNode.nodeType === 8 && parentNode.parentNode) || parentNode;
-
-                // Rule [A]
-                while (continuousNodeArray.length && continuousNodeArray[0].parentNode !== parentNode)
-                    continuousNodeArray.splice(0, 1);
-
-                // Rule [B]
-                if (continuousNodeArray.length > 1) {
-                    var current = continuousNodeArray[0], last = continuousNodeArray[continuousNodeArray.length - 1];
-                    // Replace with the actual new continuous node set
-                    continuousNodeArray.length = 0;
-                    while (current !== last) {
-                        continuousNodeArray.push(current);
-                        current = current.nextSibling;
-                        if (!current) // Won't happen, except if the developer has manually removed some DOM elements (then we're in an undefined scenario)
-                            return;
-                    }
-                    continuousNodeArray.push(last);
-                }
-            }
-            return continuousNodeArray;
-        },
+        // fixUpContinuousNodeArray: function(continuousNodeArray, parentNode) {
+        //     if (continuousNodeArray.length) {
+        //         // The parent node can be a virtual element; so get the real parent node
+        //         parentNode = (parentNode.nodeType === 8 && parentNode.parentNode) || parentNode;
+        //
+        //         // Rule [A]
+        //         while (continuousNodeArray.length && continuousNodeArray[0].parentNode !== parentNode)
+        //             continuousNodeArray.splice(0, 1);
+        //
+        //         // Rule [B]
+        //         if (continuousNodeArray.length > 1) {
+        //             var current = continuousNodeArray[0], last = continuousNodeArray[continuousNodeArray.length - 1];
+        //             // Replace with the actual new continuous node set
+        //             continuousNodeArray.length = 0;
+        //             while (current !== last) {
+        //                 continuousNodeArray.push(current);
+        //                 current = current.nextSibling;
+        //                 if (!current) // Won't happen, except if the developer has manually removed some DOM elements (then we're in an undefined scenario)
+        //                     return;
+        //             }
+        //             continuousNodeArray.push(last);
+        //         }
+        //     }
+        //     return continuousNodeArray;
+        // },
 
         stringTrim: function (string) {
             return string === null || string === undefined ? '' :
