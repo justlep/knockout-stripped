@@ -4,7 +4,7 @@
  * License: MIT (http://www.opensource.org/licenses/mit-license.php)
  */
 
-// !!!!!! PATCHED VERSION v1 !!!!!!
+// !!!!!! PATCHED VERSION v2 !!!!!!
 
 (function(){
 var DEBUG=true;
@@ -186,33 +186,6 @@ ko.utils = (function () {
             return target;
         },
 
-
-        fixUpContinuousNodeArray: function(continuousNodeArray, parentNode) {
-            if (continuousNodeArray.length) {
-                // The parent node can be a virtual element; so get the real parent node
-                parentNode = (parentNode.nodeType === 8 && parentNode.parentNode) || parentNode;
-
-                // Rule [A]
-                while (continuousNodeArray.length && continuousNodeArray[0].parentNode !== parentNode)
-                    continuousNodeArray.splice(0, 1);
-
-                // Rule [B]
-                if (continuousNodeArray.length > 1) {
-                    var current = continuousNodeArray[0], last = continuousNodeArray[continuousNodeArray.length - 1];
-                    // Replace with the actual new continuous node set
-                    continuousNodeArray.length = 0;
-                    while (current !== last) {
-                        continuousNodeArray.push(current);
-                        current = current.nextSibling;
-                        if (!current) // Won't happen, except if the developer has manually removed some DOM elements (then we're in an undefined scenario)
-                            return;
-                    }
-                    continuousNodeArray.push(last);
-                }
-            }
-            return continuousNodeArray;
-        },
-
         stringTrim: function (string) {
             return string === null || string === undefined ? '' :
                 string.trim ?
@@ -242,13 +215,6 @@ ko.utils = (function () {
             return setTimeout(ko.utils.catchFunctionErrors(handler), timeout);
         },
 
-        deferError: function (error) {
-            setTimeout(function () {
-                ko['onError'] && ko['onError'](error);
-                throw error;
-            }, 0);
-        },
-
         unwrapObservable: function (value) {
             return ko.isObservable(value) ? value() : value;
         },
@@ -276,26 +242,7 @@ ko.utils = (function () {
 
         createSymbolOrString: function(identifier) {
             return canUseSymbols ? Symbol(identifier) : identifier;
-        },
-
-        parseJson: function (jsonString) {
-            if (typeof jsonString == "string") {
-                jsonString = ko.utils.stringTrim(jsonString);
-                if (jsonString) {
-                    if (JSON && JSON.parse) // Use native parsing where available
-                        return JSON.parse(jsonString);
-                    return (new Function("return " + jsonString))(); // Fallback on less safe parsing for older browsers
-                }
-            }
-            return null;
-        },
-
-        stringifyJson: function (data, replacer, space) {   // replacer and space are optional
-            if (!JSON || !JSON.stringify)
-                throw new Error("Cannot find JSON.stringify(). Some browsers (e.g., IE < 8) don't support it natively, but you can overcome this by adding a script reference to json2.js, downloadable from http://www.json.org/json2.js");
-            return JSON.stringify(ko.utils.unwrapObservable(data), replacer, space);
         }
-
     }
 }());
 
@@ -310,13 +257,11 @@ ko.exportSymbol('utils.arrayPushAll', ko.utils.arrayPushAll);
 ko.exportSymbol('utils.arrayRemoveItem', ko.utils.arrayRemoveItem);
 ko.exportSymbol('utils.extend', ko.utils.extend);
 ko.exportSymbol('utils.peekObservable', ko.utils.peekObservable);
-ko.exportSymbol('utils.parseJson', ko.utils.parseJson);
-ko.exportSymbol('utils.stringifyJson', ko.utils.stringifyJson);
 ko.exportSymbol('utils.range', ko.utils.range);
 ko.exportSymbol('utils.unwrapObservable', ko.utils.unwrapObservable);
 ko.exportSymbol('utils.objectForEach', ko.utils.objectForEach);
 ko.exportSymbol('utils.addOrRemoveItem', ko.utils.addOrRemoveItem);
-ko.exportSymbol('unwrap', ko.utils.unwrapObservable); // Convenient shorthand, because this is used so commonly
+ko.exportSymbol('unwrap', ko.utils.unwrapObservable);
 
 if (!Function.prototype['bind']) {
     // Function.prototype.bind is a standard part of ECMAScript 5th Edition (December 2009, http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-262.pdf)
@@ -338,63 +283,64 @@ if (!Function.prototype['bind']) {
     };
 }
 ko.extenders = {
-    'throttle': function(target, timeout) {
-        // Throttling means two things:
 
-        // (1) For dependent observables, we throttle *evaluations* so that, no matter how fast its dependencies
-        //     notify updates, the target doesn't re-evaluate (and hence doesn't notify) faster than a certain rate
-        target['throttleEvaluation'] = timeout;
-
-        // (2) For writable targets (observables, or writable dependent observables), we throttle *writes*
-        //     so the target cannot change value synchronously or faster than a certain rate
-        var writeTimeoutInstance = null;
-        return ko.dependentObservable({
-            'read': target,
-            'write': function(value) {
-                clearTimeout(writeTimeoutInstance);
-                writeTimeoutInstance = ko.utils.setTimeout(function() {
-                    target(value);
-                }, timeout);
-            }
-        });
-    },
-
-    'rateLimit': function(target, options) {
-        var timeout, method, limitFunction;
-
-        if (typeof options == 'number') {
-            timeout = options;
-        } else {
-            timeout = options['timeout'];
-            method = options['method'];
-        }
-
-        // rateLimit supersedes deferred updates
-        target._deferUpdates = false;
-
-        limitFunction = method == 'notifyWhenChangesStop' ?  debounce : throttle;
-        target.limit(function(callback) {
-            return limitFunction(callback, timeout);
-        });
-    },
-
-    'deferred': function(target, options) {
-        if (options !== true) {
-            throw new Error('The \'deferred\' extender only accepts the value \'true\', because it is not supported to turn deferral off once enabled.')
-        }
-
-        if (!target._deferUpdates) {
-            target._deferUpdates = true;
-            target.limit(function (callback) {
-                var handle;
-                return function () {
-                    ko.tasks.cancel(handle);
-                    handle = ko.tasks.schedule(callback);
-                    target['notifySubscribers'](undefined, 'dirty');
-                };
-            });
-        }
-    },
+    // 'throttle': function(target, timeout) {
+    //     // Throttling means two things:
+    //
+    //     // (1) For dependent observables, we throttle *evaluations* so that, no matter how fast its dependencies
+    //     //     notify updates, the target doesn't re-evaluate (and hence doesn't notify) faster than a certain rate
+    //     target['throttleEvaluation'] = timeout;
+    //
+    //     // (2) For writable targets (observables, or writable dependent observables), we throttle *writes*
+    //     //     so the target cannot change value synchronously or faster than a certain rate
+    //     var writeTimeoutInstance = null;
+    //     return ko.dependentObservable({
+    //         'read': target,
+    //         'write': function(value) {
+    //             clearTimeout(writeTimeoutInstance);
+    //             writeTimeoutInstance = ko.utils.setTimeout(function() {
+    //                 target(value);
+    //             }, timeout);
+    //         }
+    //     });
+    // },
+    //
+    // 'rateLimit': function(target, options) {
+    //     var timeout, method, limitFunction;
+    //
+    //     if (typeof options == 'number') {
+    //         timeout = options;
+    //     } else {
+    //         timeout = options['timeout'];
+    //         method = options['method'];
+    //     }
+    //
+    //     // rateLimit supersedes deferred updates
+    //     target._deferUpdates = false;
+    //
+    //     limitFunction = method == 'notifyWhenChangesStop' ?  debounce : throttle;
+    //     target.limit(function(callback) {
+    //         return limitFunction(callback, timeout);
+    //     });
+    // },
+    //
+    // 'deferred': function(target, options) {
+    //     if (options !== true) {
+    //         throw new Error('The \'deferred\' extender only accepts the value \'true\', because it is not supported to turn deferral off once enabled.')
+    //     }
+    //
+    //     if (!target._deferUpdates) {
+    //         target._deferUpdates = true;
+    //         target.limit(function (callback) {
+    //             var handle;
+    //             return function () {
+    //                 ko.tasks.cancel(handle);
+    //                 handle = ko.tasks.schedule(callback);
+    //                 target['notifySubscribers'](undefined, 'dirty');
+    //             };
+    //         });
+    //     }
+    // },
 
     'notify': function(target, notifyWhen) {
         target["equalityComparer"] = notifyWhen == "always" ?
@@ -1059,7 +1005,7 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         isSleeping: false,
         readFunction: options["read"],
         evaluatorFunctionTarget: evaluatorFunctionTarget || options["owner"],
-        disposeWhenNodeIsRemoved: options["disposeWhenNodeIsRemoved"] || options.disposeWhenNodeIsRemoved || null,
+        disposeWhenNodeIsRemoved: null,
         disposeWhen: options["disposeWhen"] || options.disposeWhen,
         domNodeDisposalCallback: null,
         dependencyTracking: {},
@@ -1116,32 +1062,9 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         computedObservable["_options"] = options;
     }
 
-    if (state.disposeWhenNodeIsRemoved) {
-        // Since this computed is associated with a DOM node, and we don't want to dispose the computed
-        // until the DOM node is *removed* from the document (as opposed to never having been in the document),
-        // we'll prevent disposal until "disposeWhen" first returns false.
-        state.suppressDisposalUntilDisposeWhenReturnsFalse = true;
-
-        // disposeWhenNodeIsRemoved: true can be used to opt into the "only dispose after first false result"
-        // behaviour even if there's no specific node to watch. In that case, clear the option so we don't try
-        // to watch for a non-node's disposal. This technique is intended for KO's internal use only and shouldn't
-        // be documented or used by application code, as it's likely to change in a future version of KO.
-        if (!state.disposeWhenNodeIsRemoved.nodeType) {
-            state.disposeWhenNodeIsRemoved = null;
-        }
-    }
-
     // Evaluate, unless sleeping or deferEvaluation is true
     if (!state.isSleeping && !options['deferEvaluation']) {
         computedObservable.evaluateImmediate();
-    }
-
-    // Attach a DOM node disposal callback so that the computed will be proactively disposed as soon as the node is
-    // removed using ko.removeNode. But skip if isActive is false (there will never be any dependencies to dispose).
-    if (state.disposeWhenNodeIsRemoved && computedObservable.isActive()) {
-        ko.utils.domNodeDisposal.addDisposeCallback(state.disposeWhenNodeIsRemoved, state.domNodeDisposalCallback = function () {
-            computedObservable.dispose();
-        });
     }
 
     return computedObservable;
@@ -1213,7 +1136,7 @@ var computedFn = {
         }
     },
     subscribeToDependency: function (target) {
-        if (target._deferUpdates && !this[computedState].disposeWhenNodeIsRemoved) {
+        if (target._deferUpdates) {
             var dirtySub = target.subscribe(this.markDirty, this, 'dirty'),
                 changeSub = target.subscribe(this.respondToChange, this);
             return {
@@ -1264,7 +1187,7 @@ var computedFn = {
             return;
         }
 
-        if (state.disposeWhenNodeIsRemoved && !ko.utils.domNodeIsAttachedToDocument(state.disposeWhenNodeIsRemoved) || disposeWhen && disposeWhen()) {
+        if (disposeWhen && disposeWhen()) {
             // See comment above about suppressDisposalUntilDisposeWhenReturnsFalse
             if (!state.suppressDisposalUntilDisposeWhenReturnsFalse) {
                 computedObservable.dispose();
@@ -1385,9 +1308,7 @@ var computedFn = {
                     dependency.dispose();
             });
         }
-        if (state.disposeWhenNodeIsRemoved && state.domNodeDisposalCallback) {
-            ko.utils.domNodeDisposal.removeDisposeCallback(state.disposeWhenNodeIsRemoved, state.domNodeDisposalCallback);
-        }
+
         state.dependencyTracking = null;
         state.dependenciesCount = 0;
         state.isDisposed = true;
@@ -1507,102 +1428,6 @@ ko.pureComputed = function (evaluatorFunctionOrOptions, evaluatorFunctionTarget)
     }
 }
 ko.exportSymbol('pureComputed', ko.pureComputed);
-
-(function() {
-    var maxNestedObservableDepth = 10; // Escape the (unlikely) pathalogical case where an observable's current value is itself (or similar reference cycle)
-
-    ko.toJS = function(rootObject) {
-        if (arguments.length == 0)
-            throw new Error("When calling ko.toJS, pass the object you want to convert.");
-
-        // We just unwrap everything at every level in the object graph
-        return mapJsObjectGraph(rootObject, function(valueToMap) {
-            // Loop because an observable's value might in turn be another observable wrapper
-            for (var i = 0; ko.isObservable(valueToMap) && (i < maxNestedObservableDepth); i++)
-                valueToMap = valueToMap();
-            return valueToMap;
-        });
-    };
-
-    ko.toJSON = function(rootObject, replacer, space) {     // replacer and space are optional
-        var plainJavaScriptObject = ko.toJS(rootObject);
-        return ko.utils.stringifyJson(plainJavaScriptObject, replacer, space);
-    };
-
-    function mapJsObjectGraph(rootObject, mapInputCallback, visitedObjects) {
-        visitedObjects = visitedObjects || new objectLookup();
-
-        rootObject = mapInputCallback(rootObject);
-        var canHaveProperties = (typeof rootObject == "object") && (rootObject !== null) && (rootObject !== undefined) && (!(rootObject instanceof RegExp)) && (!(rootObject instanceof Date)) && (!(rootObject instanceof String)) && (!(rootObject instanceof Number)) && (!(rootObject instanceof Boolean));
-        if (!canHaveProperties)
-            return rootObject;
-
-        var outputProperties = rootObject instanceof Array ? [] : {};
-        visitedObjects.save(rootObject, outputProperties);
-
-        visitPropertiesOrArrayEntries(rootObject, function(indexer) {
-            var propertyValue = mapInputCallback(rootObject[indexer]);
-
-            switch (typeof propertyValue) {
-                case "boolean":
-                case "number":
-                case "string":
-                case "function":
-                    outputProperties[indexer] = propertyValue;
-                    break;
-                case "object":
-                case "undefined":
-                    var previouslyMappedValue = visitedObjects.get(propertyValue);
-                    outputProperties[indexer] = (previouslyMappedValue !== undefined)
-                        ? previouslyMappedValue
-                        : mapJsObjectGraph(propertyValue, mapInputCallback, visitedObjects);
-                    break;
-            }
-        });
-
-        return outputProperties;
-    }
-
-    function visitPropertiesOrArrayEntries(rootObject, visitorCallback) {
-        if (rootObject instanceof Array) {
-            for (var i = 0; i < rootObject.length; i++)
-                visitorCallback(i);
-
-            // For arrays, also respect toJSON property for custom mappings (fixes #278)
-            if (typeof rootObject['toJSON'] == 'function')
-                visitorCallback('toJSON');
-        } else {
-            for (var propertyName in rootObject) {
-                visitorCallback(propertyName);
-            }
-        }
-    };
-
-    function objectLookup() {
-        this.keys = [];
-        this.values = [];
-    };
-
-    objectLookup.prototype = {
-        constructor: objectLookup,
-        save: function(key, value) {
-            var existingIndex = ko.utils.arrayIndexOf(this.keys, key);
-            if (existingIndex >= 0)
-                this.values[existingIndex] = value;
-            else {
-                this.keys.push(key);
-                this.values.push(value);
-            }
-        },
-        get: function(key) {
-            var existingIndex = ko.utils.arrayIndexOf(this.keys, key);
-            return (existingIndex >= 0) ? this.values[existingIndex] : undefined;
-        }
-    };
-})();
-
-ko.exportSymbol('toJS', ko.toJS);
-ko.exportSymbol('toJSON', ko.toJSON);
 }));
 }());
 })();
