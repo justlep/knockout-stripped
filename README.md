@@ -1,7 +1,7 @@
 # Knockout-stripped
-A heavily reduced [KnockoutJS](http://knockoutjs.com/) (v3.3.0) with most DOM-related code removed (no bindings, extenders etc).  
+A heavily reduced [KnockoutJS](http://knockoutjs.com/) (v3.3.0) with most browser-related code removed (no bindings, no extenders except 'notify', etc).
 
-Created to take advantage of Knockout's Observable datatypes in a **non-browser** environment, like Bitwig controller scripts.
+Created to take advantage of Knockout's Observable datatypes in **non-Browser/DOM** environments, like Bitwig controller scripts.
 Supported datatypes are:
 * ko.observable()
 * ko.observableArray()
