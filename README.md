@@ -1,5 +1,6 @@
 # Knockout-stripped
-A heavily reduced [KnockoutJS](http://knockoutjs.com/) (v3.3.0) with most browser-related code removed (no bindings, no extenders except 'notify', etc).
+A heavily reduced [KnockoutJS](http://knockoutjs.com/) (v3.3.0) with most browser-related code removed  
+(no bindings, no extenders except *notify*, no JSON utils etc).
 
 Created to take advantage of Knockout's Observable datatypes in **non-Browser/DOM** environments, like Bitwig controller scripts.
 Supported datatypes are:
@@ -8,7 +9,7 @@ Supported datatypes are:
 * ko.computed()
 * ko.pureComputed()
 
-See [/build/output/](./build/output) for download.
+See [/build/output](./build/output) for download.
 
 ---
 ---
