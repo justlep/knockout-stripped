@@ -4,7 +4,7 @@
  * License: MIT (http://www.opensource.org/licenses/mit-license.php)
  */
 
-// !!!!!! PATCHED VERSION !!!!!!
+// !!!!!! PATCHED VERSION v1 !!!!!!
 
 (function(){
 var DEBUG=true;
