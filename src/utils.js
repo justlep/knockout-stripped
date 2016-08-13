@@ -127,33 +127,6 @@ ko.utils = (function () {
             return target;
         },
 
-
-        // fixUpContinuousNodeArray: function(continuousNodeArray, parentNode) {
-        //     if (continuousNodeArray.length) {
-        //         // The parent node can be a virtual element; so get the real parent node
-        //         parentNode = (parentNode.nodeType === 8 && parentNode.parentNode) || parentNode;
-        //
-        //         // Rule [A]
-        //         while (continuousNodeArray.length && continuousNodeArray[0].parentNode !== parentNode)
-        //             continuousNodeArray.splice(0, 1);
-        //
-        //         // Rule [B]
-        //         if (continuousNodeArray.length > 1) {
-        //             var current = continuousNodeArray[0], last = continuousNodeArray[continuousNodeArray.length - 1];
-        //             // Replace with the actual new continuous node set
-        //             continuousNodeArray.length = 0;
-        //             while (current !== last) {
-        //                 continuousNodeArray.push(current);
-        //                 current = current.nextSibling;
-        //                 if (!current) // Won't happen, except if the developer has manually removed some DOM elements (then we're in an undefined scenario)
-        //                     return;
-        //             }
-        //             continuousNodeArray.push(last);
-        //         }
-        //     }
-        //     return continuousNodeArray;
-        // },
-
         stringTrim: function (string) {
             return string === null || string === undefined ? '' :
                 string.trim ?
@@ -181,13 +154,6 @@ ko.utils = (function () {
 
         setTimeout: function (handler, timeout) {
             return setTimeout(ko.utils.catchFunctionErrors(handler), timeout);
-        },
-
-        deferError: function (error) {
-            setTimeout(function () {
-                ko['onError'] && ko['onError'](error);
-                throw error;
-            }, 0);
         },
 
         unwrapObservable: function (value) {
@@ -218,25 +184,6 @@ ko.utils = (function () {
         createSymbolOrString: function(identifier) {
             return canUseSymbols ? Symbol(identifier) : identifier;
         }
-
-        // parseJson: function (jsonString) {
-        //     if (typeof jsonString == "string") {
-        //         jsonString = ko.utils.stringTrim(jsonString);
-        //         if (jsonString) {
-        //             if (JSON && JSON.parse) // Use native parsing where available
-        //                 return JSON.parse(jsonString);
-        //             return (new Function("return " + jsonString))(); // Fallback on less safe parsing for older browsers
-        //         }
-        //     }
-        //     return null;
-        // },
-
-        // stringifyJson: function (data, replacer, space) {   // replacer and space are optional
-        //     if (!JSON || !JSON.stringify)
-        //         throw new Error("Cannot find JSON.stringify(). Some browsers (e.g., IE < 8) don't support it natively, but you can overcome this by adding a script reference to json2.js, downloadable from http://www.json.org/json2.js");
-        //     return JSON.stringify(ko.utils.unwrapObservable(data), replacer, space);
-        // }
-
     }
 }());
 
@@ -251,13 +198,11 @@ ko.exportSymbol('utils.arrayPushAll', ko.utils.arrayPushAll);
 ko.exportSymbol('utils.arrayRemoveItem', ko.utils.arrayRemoveItem);
 ko.exportSymbol('utils.extend', ko.utils.extend);
 ko.exportSymbol('utils.peekObservable', ko.utils.peekObservable);
-// ko.exportSymbol('utils.parseJson', ko.utils.parseJson);
-// ko.exportSymbol('utils.stringifyJson', ko.utils.stringifyJson);
 ko.exportSymbol('utils.range', ko.utils.range);
 ko.exportSymbol('utils.unwrapObservable', ko.utils.unwrapObservable);
 ko.exportSymbol('utils.objectForEach', ko.utils.objectForEach);
 ko.exportSymbol('utils.addOrRemoveItem', ko.utils.addOrRemoveItem);
-ko.exportSymbol('unwrap', ko.utils.unwrapObservable); // Convenient shorthand, because this is used so commonly
+ko.exportSymbol('unwrap', ko.utils.unwrapObservable);
 
 if (!Function.prototype['bind']) {
     // Function.prototype.bind is a standard part of ECMAScript 5th Edition (December 2009, http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-262.pdf)
