@@ -217,25 +217,25 @@ ko.utils = (function () {
 
         createSymbolOrString: function(identifier) {
             return canUseSymbols ? Symbol(identifier) : identifier;
-        },
-
-        parseJson: function (jsonString) {
-            if (typeof jsonString == "string") {
-                jsonString = ko.utils.stringTrim(jsonString);
-                if (jsonString) {
-                    if (JSON && JSON.parse) // Use native parsing where available
-                        return JSON.parse(jsonString);
-                    return (new Function("return " + jsonString))(); // Fallback on less safe parsing for older browsers
-                }
-            }
-            return null;
-        },
-
-        stringifyJson: function (data, replacer, space) {   // replacer and space are optional
-            if (!JSON || !JSON.stringify)
-                throw new Error("Cannot find JSON.stringify(). Some browsers (e.g., IE < 8) don't support it natively, but you can overcome this by adding a script reference to json2.js, downloadable from http://www.json.org/json2.js");
-            return JSON.stringify(ko.utils.unwrapObservable(data), replacer, space);
         }
+
+        // parseJson: function (jsonString) {
+        //     if (typeof jsonString == "string") {
+        //         jsonString = ko.utils.stringTrim(jsonString);
+        //         if (jsonString) {
+        //             if (JSON && JSON.parse) // Use native parsing where available
+        //                 return JSON.parse(jsonString);
+        //             return (new Function("return " + jsonString))(); // Fallback on less safe parsing for older browsers
+        //         }
+        //     }
+        //     return null;
+        // },
+
+        // stringifyJson: function (data, replacer, space) {   // replacer and space are optional
+        //     if (!JSON || !JSON.stringify)
+        //         throw new Error("Cannot find JSON.stringify(). Some browsers (e.g., IE < 8) don't support it natively, but you can overcome this by adding a script reference to json2.js, downloadable from http://www.json.org/json2.js");
+        //     return JSON.stringify(ko.utils.unwrapObservable(data), replacer, space);
+        // }
 
     }
 }());
@@ -251,8 +251,8 @@ ko.exportSymbol('utils.arrayPushAll', ko.utils.arrayPushAll);
 ko.exportSymbol('utils.arrayRemoveItem', ko.utils.arrayRemoveItem);
 ko.exportSymbol('utils.extend', ko.utils.extend);
 ko.exportSymbol('utils.peekObservable', ko.utils.peekObservable);
-ko.exportSymbol('utils.parseJson', ko.utils.parseJson);
-ko.exportSymbol('utils.stringifyJson', ko.utils.stringifyJson);
+// ko.exportSymbol('utils.parseJson', ko.utils.parseJson);
+// ko.exportSymbol('utils.stringifyJson', ko.utils.stringifyJson);
 ko.exportSymbol('utils.range', ko.utils.range);
 ko.exportSymbol('utils.unwrapObservable', ko.utils.unwrapObservable);
 ko.exportSymbol('utils.objectForEach', ko.utils.objectForEach);
