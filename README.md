@@ -2,7 +2,7 @@
 A heavily reduced [KnockoutJS](http://knockoutjs.com/) (v3.3.0) with most DOM-related code removed (no bindings, extenders etc).  
 
 Created to take advantage of Knockout's Observable datatypes in a **non-browser** environment, like Bitwig controller scripts.
-Working datatypes are:
+Supported datatypes are:
 * ko.observable()
 * ko.observableArray()
 * ko.computed()
