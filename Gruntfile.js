@@ -11,7 +11,9 @@ module.exports = function(grunt) {
                 ' * Knockout JavaScript library v<%= pkg.version %>\n' +
                 ' * (c) The Knockout.js team - <%= pkg.homepage %>\n' +
                 ' * License: <%= pkg.licenses[0].type %> (<%= pkg.licenses[0].url %>)\n' +
-                ' */\n\n',
+                ' */\n\n' +
+                ' // !! PATCHED VERSION !!\n' +
+                ' // See: https://github.com/justlep/knockout-stripped/\n\n',
 
         checktrailingspaces: {
             main: {
@@ -24,8 +26,8 @@ module.exports = function(grunt) {
             }
         },
         build: {
-            debug: './build/output/knockout-latest.debug.js',
-            min: './build/output/knockout-latest.js'
+            debug: './build/output/knockout-stripped.debug.js',
+            min: './build/output/knockout-stripped.js'
         },
         dist: {
             debug: './dist/knockout.debug.js',
