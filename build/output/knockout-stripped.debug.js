@@ -53,7 +53,6 @@ ko.version = "3.4.2";
 ko.exportSymbol('version', ko.version);
 // For any options that may affect various areas of Knockout and aren't directly associated with data binding.
 ko.options = {
-    'deferUpdates': false,
     'useOnlyNativeEvents': false
 };
 
@@ -245,73 +244,6 @@ ko.exportSymbol('utils.objectForEach', ko.utils.objectForEach);
 ko.exportSymbol('utils.addOrRemoveItem', ko.utils.addOrRemoveItem);
 ko.exportSymbol('unwrap', ko.utils.unwrapObservable); // Convenient shorthand, because this is used so commonly
 ko.extenders = {
-    // 'throttle': function(target, timeout) {
-    //     // Throttling means two things:
-    //
-    //     // (1) For dependent observables, we throttle *evaluations* so that, no matter how fast its dependencies
-    //     //     notify updates, the target doesn't re-evaluate (and hence doesn't notify) faster than a certain rate
-    //     target['throttleEvaluation'] = timeout;
-    //
-    //     // (2) For writable targets (observables, or writable dependent observables), we throttle *writes*
-    //     //     so the target cannot change value synchronously or faster than a certain rate
-    //     var writeTimeoutInstance = null;
-    //     return ko.dependentObservable({
-    //         'read': target,
-    //         'write': function(value) {
-    //             clearTimeout(writeTimeoutInstance);
-    //             writeTimeoutInstance = ko.utils.setTimeout(function() {
-    //                 target(value);
-    //             }, timeout);
-    //         }
-    //     });
-    // },
-    //
-    // 'rateLimit': function(target, options) {
-    //     var timeout, method, limitFunction;
-    //
-    //     if (typeof options == 'number') {
-    //         timeout = options;
-    //     } else {
-    //         timeout = options['timeout'];
-    //         method = options['method'];
-    //     }
-    //
-    //     // rateLimit supersedes deferred updates
-    //     target._deferUpdates = false;
-    //
-    //     limitFunction = method == 'notifyWhenChangesStop' ?  debounce : throttle;
-    //     target.limit(function(callback) {
-    //         return limitFunction(callback, timeout);
-    //     });
-    // },
-    //
-    // 'deferred': function(target, options) {
-    //     if (options !== true) {
-    //         throw new Error('The \'deferred\' extender only accepts the value \'true\', because it is not supported to turn deferral off once enabled.')
-    //     }
-    //
-    //     if (!target._deferUpdates) {
-    //         target._deferUpdates = true;
-    //         target.limit(function (callback) {
-    //             var handle,
-    //                 ignoreUpdates = false;
-    //             return function () {
-    //                 if (!ignoreUpdates) {
-    //                     ko.tasks.cancel(handle);
-    //                     handle = ko.tasks.schedule(callback);
-    //
-    //                     try {
-    //                         ignoreUpdates = true;
-    //                         target['notifySubscribers'](undefined, 'dirty');
-    //                     } finally {
-    //                         ignoreUpdates = false;
-    //                     }
-    //                 }
-    //             };
-    //         });
-    //     }
-    // },
-
     'notify': function(target, notifyWhen) {
         target["equalityComparer"] = notifyWhen == "always" ?
             null :  // null equalityComparer means to always notify
@@ -324,26 +256,6 @@ function valuesArePrimitiveAndEqual(a, b) {
     var oldValueIsPrimitive = (a === null) || (typeof(a) in primitiveTypes);
     return oldValueIsPrimitive ? (a === b) : false;
 }
-
-// function throttle(callback, timeout) {
-//     var timeoutInstance;
-//     return function () {
-//         if (!timeoutInstance) {
-//             timeoutInstance = ko.utils.setTimeout(function () {
-//                 timeoutInstance = undefined;
-//                 callback();
-//             }, timeout);
-//         }
-//     };
-// }
-//
-// function debounce(callback, timeout) {
-//     var timeoutInstance;
-//     return function () {
-//         clearTimeout(timeoutInstance);
-//         timeoutInstance = ko.utils.setTimeout(callback, timeout);
-//     };
-// }
 
 function applyExtenders(requestedExtenders) {
     var target = this;
@@ -638,12 +550,8 @@ ko.observable = function (initialValue) {
     // Inherit from 'observable'
     ko.utils.setPrototypeOfOrExtend(observable, observableFn);
 
-    if (ko.options['deferUpdates']) {
-        ko.extenders['deferred'](observable, true);
-    }
-
     return observable;
-}
+};
 
 // Define prototype for observables
 var observableFn = {
@@ -1039,10 +947,6 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         ko.utils.extend(computedObservable, deferEvaluationOverrides);
     }
 
-    if (ko.options['deferUpdates']) {
-        ko.extenders['deferred'](computedObservable, true);
-    }
-
     if (DEBUG) {
         // #1731 - Aid debugging by exposing the computed's options
         computedObservable["_options"] = options;
@@ -1152,19 +1056,7 @@ var computedFn = {
         }
     },
     subscribeToDependency: function (target) {
-        if (target._deferUpdates && !this[computedState].disposeWhenNodeIsRemoved) {
-            var dirtySub = target.subscribe(this.markDirty, this, 'dirty'),
-                changeSub = target.subscribe(this.respondToChange, this);
-            return {
-                _target: target,
-                dispose: function () {
-                    dirtySub.dispose();
-                    changeSub.dispose();
-                }
-            };
-        } else {
-            return target.subscribe(this.evaluatePossiblyAsync, this);
-        }
+        return target.subscribe(this.evaluatePossiblyAsync, this);
     },
     evaluatePossiblyAsync: function () {
         var computedObservable = this,

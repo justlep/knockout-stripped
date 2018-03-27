@@ -32,12 +32,8 @@ ko.observable = function (initialValue) {
     // Inherit from 'observable'
     ko.utils.setPrototypeOfOrExtend(observable, observableFn);
 
-    if (ko.options['deferUpdates']) {
-        ko.extenders['deferred'](observable, true);
-    }
-
     return observable;
-}
+};
 
 // Define prototype for observables
 var observableFn = {
