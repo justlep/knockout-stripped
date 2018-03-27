@@ -30,17 +30,13 @@ if (process.argv.length > 2 && process.argv[2] == '--source') {
 
 // reference behaviors that should work out of browser
 require('./arrayEditDetectionBehaviors');
-// require('./asyncBehaviors');
 require('./dependentObservableBehaviors');
 require('./pureComputedBehaviors');
-// require('./expressionRewritingBehaviors');
 require('./extenderBehaviors');
-require('./mappingHelperBehaviors');
 require('./observableArrayBehaviors');
 require('./observableArrayChangeTrackingBehaviors');
 require('./observableBehaviors');
 require('./subscribableBehaviors');
-// require('./taskBehaviors');
 require('./utilsBehaviors');
 
 // get reference to jasmine runtime
