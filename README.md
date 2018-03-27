@@ -1,4 +1,4 @@
-# knockout-stripped
+# knockout-stripped [![Build Status](https://travis-ci.org/justlep/knockout-stripped.svg?branch=master)](https://travis-ci.org/justlep/knockout-stripped)
 A heavily reduced [KnockoutJS](http://knockoutjs.com/) (v3.4.2) with most browser-related code removed,
 (no bindings, components or extenders (except *notify*), no JSON utils etc).
 
