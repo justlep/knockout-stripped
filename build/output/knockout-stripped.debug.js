@@ -51,12 +51,6 @@ ko.exportProperty = function(owner, publicName, object) {
 ko.version = "3.4.2";
 
 ko.exportSymbol('version', ko.version);
-// For any options that may affect various areas of Knockout and aren't directly associated with data binding.
-ko.options = {
-    'useOnlyNativeEvents': false
-};
-
-//ko.exportSymbol('options', ko.options);   // 'options' isn't minified
 ko.utils = (function () {
     function objectForEach(obj, action) {
         for (var prop in obj) {
@@ -899,7 +893,6 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         isSleeping: false,
         readFunction: options["read"],
         evaluatorFunctionTarget: evaluatorFunctionTarget || options["owner"],
-        disposeWhenNodeIsRemoved: options["disposeWhenNodeIsRemoved"] || options.disposeWhenNodeIsRemoved || null,
         disposeWhen: options["disposeWhen"] || options.disposeWhen,
         domNodeDisposalCallback: null,
         dependencyTracking: {},
@@ -952,32 +945,9 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         computedObservable["_options"] = options;
     }
 
-    if (state.disposeWhenNodeIsRemoved) {
-        // Since this computed is associated with a DOM node, and we don't want to dispose the computed
-        // until the DOM node is *removed* from the document (as opposed to never having been in the document),
-        // we'll prevent disposal until "disposeWhen" first returns false.
-        state.suppressDisposalUntilDisposeWhenReturnsFalse = true;
-
-        // disposeWhenNodeIsRemoved: true can be used to opt into the "only dispose after first false result"
-        // behaviour even if there's no specific node to watch. In that case, clear the option so we don't try
-        // to watch for a non-node's disposal. This technique is intended for KO's internal use only and shouldn't
-        // be documented or used by application code, as it's likely to change in a future version of KO.
-        if (!state.disposeWhenNodeIsRemoved.nodeType) {
-            state.disposeWhenNodeIsRemoved = null;
-        }
-    }
-
     // Evaluate, unless sleeping or deferEvaluation is true
     if (!state.isSleeping && !options['deferEvaluation']) {
         computedObservable.evaluateImmediate();
-    }
-
-    // Attach a DOM node disposal callback so that the computed will be proactively disposed as soon as the node is
-    // removed using ko.removeNode. But skip if isActive is false (there will never be any dependencies to dispose).
-    if (state.disposeWhenNodeIsRemoved && computedObservable.isActive()) {
-        ko.utils.domNodeDisposal.addDisposeCallback(state.disposeWhenNodeIsRemoved, state.domNodeDisposalCallback = function () {
-            computedObservable.dispose();
-        });
     }
 
     return computedObservable;
@@ -1091,7 +1061,7 @@ var computedFn = {
             return;
         }
 
-        if (state.disposeWhenNodeIsRemoved && !ko.utils.domNodeIsAttachedToDocument(state.disposeWhenNodeIsRemoved) || disposeWhen && disposeWhen()) {
+        if (disposeWhen && disposeWhen()) {
             // See comment above about suppressDisposalUntilDisposeWhenReturnsFalse
             if (!state.suppressDisposalUntilDisposeWhenReturnsFalse) {
                 computedObservable.dispose();
@@ -1230,16 +1200,12 @@ var computedFn = {
                     dependency.dispose();
             });
         }
-        if (state.disposeWhenNodeIsRemoved && state.domNodeDisposalCallback) {
-            ko.utils.domNodeDisposal.removeDisposeCallback(state.disposeWhenNodeIsRemoved, state.domNodeDisposalCallback);
-        }
         state.dependencyTracking = null;
         state.dependenciesCount = 0;
         state.isDisposed = true;
         state.isStale = false;
         state.isDirty = false;
         state.isSleeping = false;
-        state.disposeWhenNodeIsRemoved = null;
     }
 };
 
