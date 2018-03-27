@@ -278,34 +278,6 @@ describe('Dependent Observable', function() {
         expect(computed.isActive()).toEqual(false);
     });
 
-    it('Should delay disposal until after disposeWhen returns false if it is waiting for a DOM node to be removed', function() {
-        var underlyingObservable = ko.observable(100),
-            shouldDispose = true,
-            computed = ko.computed(
-                underlyingObservable,
-                null,
-                { disposeWhen: function() { return shouldDispose; }, disposeWhenNodeIsRemoved: true }
-            );
-
-        // Even though disposeWhen returns true, it doesn't dispose yet, because it's
-        // expecting an initial 'false' result to indicate the DOM node is still in the document
-        expect(underlyingObservable.getSubscriptionsCount()).toEqual(1);
-        expect(computed.isActive()).toEqual(true);
-
-        // Trigger the false result. Of course it still doesn't dispose yet, because
-        // disposeWhen says false.
-        shouldDispose = false;
-        underlyingObservable(101);
-        expect(underlyingObservable.getSubscriptionsCount()).toEqual(1);
-        expect(computed.isActive()).toEqual(true);
-
-        // Now trigger a true result. This time it will dispose.
-        shouldDispose = true;
-        underlyingObservable(102);
-        expect(underlyingObservable.getSubscriptionsCount()).toEqual(0);
-        expect(computed.isActive()).toEqual(false);
-    });
-
     it('Should describe itself as active if the evaluator has dependencies on its first run', function() {
         var someObservable = ko.observable('initial'),
             computed = ko.computed(function () { return someObservable(); });
