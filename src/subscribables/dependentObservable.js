@@ -161,17 +161,10 @@ var computedFn = {
         return target.subscribe(this.evaluatePossiblyAsync, this);
     },
     evaluatePossiblyAsync: function () {
-        var computedObservable = this,
-            throttleEvaluationTimeout = computedObservable['throttleEvaluation'];
-        if (throttleEvaluationTimeout && throttleEvaluationTimeout >= 0) {
-            clearTimeout(this[computedState].evaluationTimeoutInstance);
-            this[computedState].evaluationTimeoutInstance = ko.utils.setTimeout(function () {
-                computedObservable.evaluateImmediate(true /*notifyChange*/);
-            }, throttleEvaluationTimeout);
-        } else if (computedObservable._evalDelayed) {
-            computedObservable._evalDelayed(true /*isChange*/);
+        if (this._evalDelayed) {
+            this._evalDelayed(true /*isChange*/);
         } else {
-            computedObservable.evaluateImmediate(true /*notifyChange*/);
+            this.evaluateImmediate(true /*notifyChange*/);
         }
     },
     evaluateImmediate: function (notifyChange) {
