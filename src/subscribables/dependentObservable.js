@@ -27,7 +27,6 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         readFunction: options["read"],
         evaluatorFunctionTarget: evaluatorFunctionTarget || options["owner"],
         disposeWhen: options["disposeWhen"] || options.disposeWhen,
-        domNodeDisposalCallback: null,
         dependencyTracking: {},
         dependenciesCount: 0,
         evaluationTimeoutInstance: null
